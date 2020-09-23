@@ -13,17 +13,15 @@ module.exports = {
                 name: ctx.request.body.name,
                 hours: parseInt(ctx.request.body.hours, 10),
                 credit: parseInt(ctx.request.body.credit, 10),
-                classes: 0,
-                students: []
+                classcount: 0
             }
         }, { upsert: true });
         await next();
     },
     get: async(ctx, next) => {
-        var user = await ctx.state.collection.subjects.findOne({ code: parseInt(ctx.params.code, 10) });
-        if(!user) ctx.throw(400);
-        user.password = null;
-        ctx.body.data = user;
+        const subject = await ctx.state.collection.subjects.findOne({ code: parseInt(ctx.params.code, 10) });
+        if(!subject) ctx.throw(400);
+        ctx.body.data = subject;
         await next();
     },
     delete: async(ctx, next) => {
