@@ -1,5 +1,8 @@
 # Created by https://www.gitignore.io/api/node,emacs,macos
 
+# node.js symbolic link file
+node
+
 ### Emacs ###
 # -*- mode: gitignore; -*-
 *~
