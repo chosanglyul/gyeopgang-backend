@@ -12,9 +12,10 @@ const PORT = 8000;
 
 app.keys = [process.env.KEYS];
 
+main.use(session(app));
 main.use("/auth", auth.routes(), auth.allowedMethods());
 main.use("/subjects", subjects.routes(), subjects.allowedMethods());
+main.use(require("./lib/withAuth")).use(ctx => ctx.body.status = "success");
 
-app.use(session(app)).use(main.routes()).use(main.allowedMethods());
-
+app.use(main.routes(), main.allowedMethods());
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));

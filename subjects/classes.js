@@ -1,32 +1,54 @@
 const isNumber = require("../lib/isNumber");
 const Ajv = require('ajv');
 const ajv = new Ajv();
-const schema = {
-    "type": "object",
-    "properties": {
-        "add": {
-            "type": "array",
-            "items": [{"type": "integer"}]
-        },
-        "del": {
-            "type": "array",
-            "items": [{"type": "integer"}]
-        }
-    },
-    "additionalProperties": false,
-    "required": ["add", "del"]
-};
 
 module.exports = {
     post: async(ctx, next) => {
+        if(!ctx.request.body.time || !ctx.request.body.teacher) ctx.throw(400);
+        const schema = {
+            "type": "object",
+            "properties": {
+                "day": {
+                    "type": "array",
+                    "items": [{
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                    }]
+                },
+                "time": {
+                    "type": "array",
+                    "items": [{
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 7
+                    }]
+                },
+                "teacher": {
+                    "type":"array",
+                    "items": [{ "type": "string" }]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["day", "time", "teacher"]
+        };
+        const isValid = ajv.validate(schema, ctx.request.body.info);
+        if(!isValid) {
+            console.log(`Validation Error. ${ajv.errorsText()}`);
+            ctx.throw(400);
+        }
+
+        const info = JSON.parse(ctx.request.body.info);
         const changenum = parseInt(ctx.params.classnum, 10);
         const isExist = await ctx.state.collection.classes.countDocuments({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: changenum });
         const subject = await ctx.state.collection.subjects.findOne({ code: parseInt(ctx.params.subjectcode, 10) });
-        if(!ctx.request.body.teacher || isExist >= 1 || !subject || subject.classes >= changenum) ctx.throw(400);
+        if(isExist >= 1 || !subject || subject.classes >= changenum) ctx.throw(400);
+        if(subject.credit != info.day.length || subject.credit != info.time.length || subject.credit != info.teacher.length) ctx.throw(400);
+
         await Promise.all(Array(changenum - subject.classes).fill().map((_, i) => {
             ctx.state.collection.classes.findOneAndUpdate({ subjectcode: subject.code, classnum: i+1+subject.classes }, {
                 $setOnInsert: {
-                    teacher: ctx.request.body.teacher,
+                    info: info,
                     students: []
                 }
             }, { upsert: true });
@@ -48,6 +70,21 @@ module.exports = {
     },
     patch: async(ctx, next) => {
         if(!ctx.request.body.changes) ctx.throw(400);
+        const schema = {
+            "type": "object",
+            "properties": {
+                "add": {
+                    "type": "array",
+                    "items": [{"type": "integer"}]
+                },
+                "del": {
+                    "type": "array",
+                    "items": [{"type": "integer"}]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["add", "del"]
+        };
         const isValid = ajv.validate(schema, ctx.request.body.changes);
         if(!isValid) {
             console.log(`Validation Error. ${ajv.errorsText()}`);

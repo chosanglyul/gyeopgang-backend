@@ -23,7 +23,7 @@ passport.use('local', new LocalStrategy({
     if(!isNumber(code, "4")) return done(null, false);
     const user = await ctx.state.collection.users.findOne({ code: parseInt(code, 10) });
     if(!user) return done(null, false);
-    if(bcrypt.compare(password, user.password)) return done(null, false);
+    if(!bcrypt.compare(password, user.password)) return done(null, false);
     return done(null, user);
 }));
 
