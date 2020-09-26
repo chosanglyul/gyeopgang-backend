@@ -19,15 +19,19 @@ const schema = {
 
 module.exports = {
     post: async(ctx, next) => {
-        if(!ctx.request.body.teacher) ctx.throw(400);
-        const isExist = await ctx.state.collection.classes.countDocuments({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: parseInt(ctx.params.classnum, 10) });
-        if(isExist >= 1) ctx.throw(400);
-        await ctx.state.collection.classes.findOneAndUpdate({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: parseInt(ctx.params.classnum, 10) }, {
-            $setOnInsert: {
-                teacher: ctx.request.body.teacher,
-                students: []
-            }
-        }, { upsert: true });
+        const changenum = parseInt(ctx.params.classnum, 10);
+        const isExist = await ctx.state.collection.classes.countDocuments({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: changenum });
+        const subject = await ctx.state.collection.subjects.findOne({ code: parseInt(ctx.params.subjectcode, 10) });
+        if(!ctx.request.body.teacher || isExist >= 1 || !subject || subject.classes >= changenum) ctx.throw(400);
+        await Promise.all(Array(changenum - subject.classes).fill().map((_, i) => {
+            ctx.state.collection.classes.findOneAndUpdate({ subjectcode: subject.code, classnum: i+1+subject.classes }, {
+                $setOnInsert: {
+                    teacher: ctx.request.body.teacher,
+                    students: []
+                }
+            }, { upsert: true });
+        }))
+        await ctx.state.collection.subjects.findOneAndUpdate({ code: subject.code }, { $set: { classes: changenum+1 } }); 
         await next();
     },
     get: async(ctx, next) => {
@@ -51,8 +55,7 @@ module.exports = {
         }
 
         const changes = JSON.parse(ctx.request.body.changes);
-        if(!Array.isArray(changes.add) || !Array.isArray(changes.del)) ctx.throw(400);
-        var tmpclass = await ctx.state.collection.classes.findOne({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: parseInt(ctx.params.classnum, 10) });
+        const tmpclass = await ctx.state.collection.classes.findOne({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: parseInt(ctx.params.classnum, 10) });
         if(!tmpclass) ctx.throw(400);
 
         const chkadd = changes.add.map(student => {
@@ -63,12 +66,11 @@ module.exports = {
         if(chkadd.includes(-1) || chkdel.includes(-1)) ctx.throw(400);
         chkdel.sort().reverse().forEach(idx => tmpclass.students.splice(idx, 1));
 
-        tmpclass.students = tmpclass.students.concat(chkadd);
-        await ctx.state.collection.clases.findOneAndUpdate({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: parseInt(ctx.params.classnum, 10) }, { $set: { students: tmpclass.students } });
+        await ctx.state.collection.classes.findOneAndUpdate({ subjectcode: tmpclass.subjectcode, classnum: tmpclass.classnum }, { $set: { students: tmpclass.students.concat(chkadd) } });
         await next();
     },
     common: async(ctx, next) => {
-        if(!isNumber(ctx.params.subjectcode, "4") || ctx.params.subjectcode < 0 || !isNumber(ctx.params.classnum, "4") || ctx.params.classnum < 0) ctx.throw(400);
+        if(!isNumber(ctx.params.subjectcode, "4") || ctx.params.subjectcode < 0 || !isNumber(ctx.params.classnum, "4") || ctx.params.classnum <= 0) ctx.throw(400);
         await next();
     }
 };

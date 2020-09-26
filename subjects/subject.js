@@ -20,16 +20,16 @@ module.exports = {
         await next();
     },
     get: async(ctx, next) => {
-        var user = await ctx.state.collection.subjects.findOne({ code: parseInt(ctx.params.code, 10) });
-        if(!user) ctx.throw(400);
-        user.password = null;
-        ctx.body.data = user;
+        const subject = await ctx.state.collection.subjects.findOne({ code: parseInt(ctx.params.code, 10) });
+        if(!subject) ctx.throw(400);
+        ctx.body.data = subject;
         await next();
     },
     delete: async(ctx, next) => {
         const isExist = await ctx.state.collection.subjects.countDocuments({ code: parseInt(ctx.params.code, 10)});
         if(!isExist) ctx.throw(400);
         await ctx.state.collection.subjects.deleteOne({ code: parseInt(ctx.params.code, 10) });
+        await ctx.state.collection.classes.deleteMany({ subjectcode: parseInt(ctx.params.code, 10) });
         await next();
     },
     common: async(ctx, next) => {
