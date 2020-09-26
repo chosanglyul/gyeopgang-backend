@@ -8,11 +8,13 @@ const schema = {
     "properties": {
         "subjects": {
             "type": "array",
-            "items": [{"type": "integer"}]
+            "items": [{"type": "integer"}],
+            "additionalItems": false
         },
         "classes": {
             "type": "array",
-            "items": [{"type": "integer"}]
+            "items": [{"type": "integer"}],
+            "additionalItems": false
         }
     },
     "additionalProperties": false,
