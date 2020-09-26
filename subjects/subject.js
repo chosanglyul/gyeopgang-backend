@@ -14,8 +14,7 @@ module.exports = {
                 name: ctx.request.body.name,
                 hours: parseInt(ctx.request.body.hours, 10),
                 credit: parseInt(ctx.request.body.credit, 10),
-                classes: 0,
-                students: []
+                classes: 0
             }
         }, { upsert: true });
         await next();
