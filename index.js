@@ -21,7 +21,14 @@ main.use(session(app)).use(async (ctx, next) => {
 main.use("/auth", auth.routes(), auth.allowedMethods());
 main.use("/subjects", subjects.routes(), subjects.allowedMethods());
 //main.use(require("./lib/withAuth"))
-main.use(getdb.close).use(ctx => ctx.body.status = "success");
+main.use(async ctx => {
+    await ctx.state.client.close();
+    ctx => ctx.body.status = "success";
+});
 
 app.use(main.routes(), main.allowedMethods());
+app.on('error', async (err, ctx) => {
+    console.log('server error', err);
+    await ctx.state.client.close();
+});
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
