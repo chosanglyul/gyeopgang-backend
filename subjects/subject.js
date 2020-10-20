@@ -1,4 +1,3 @@
-const bcrypt = require("bcrypt");
 const isNumber = require("../lib/isNumber");
 
 module.exports = {
@@ -8,7 +7,7 @@ module.exports = {
         if(ctx.params.code <= 0 || ctx.request.body.hours <= 0 || ctx.request.body.credit <= 0) ctx.throw(400);
         const isExist = await ctx.state.collection.subjects.countDocuments({ code: parseInt(ctx.params.code, 10)});
         const count = await ctx.state.collection.subjects.countDocuments();
-        if(isExist >= 1 || count ) ctx.throw(400);
+        if(isExist >= 1 || count+1 != parseInt(ctx.params.code, 10)) ctx.throw(400);
         await ctx.state.collection.subjects.findOneAndUpdate({ code: parseInt(ctx.params.code, 10) }, {
             $setOnInsert: {
                 name: ctx.request.body.name,
