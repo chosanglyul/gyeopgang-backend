@@ -69,7 +69,7 @@ code must be a natural number
     - returns: 
     ```
     {
-        "status": "success" | false
+        "status": "success" | false,
         "data": 
         {
             "name": "과목명",
@@ -94,16 +94,43 @@ code must be a natural number
 ### `/subjects/:subjectcode/:classnum`
 subjectcode and classnum must be natural numbers
 
-- POST(TODO)
-    - add a new class
+- POST
+    - add new classes
     - parameters: info
+    - classnum must equals to (number of classes in database)+(length of info)
+    - elements of info must be arrays and length equals to subject's hours
     ```
-    info : 분반 정보    
-    ```
+    info : 분반 정보
 
-    example:
+    example: 두 분반을 추가, 1주일에 수업 2시간
     {
-        "info": 
+        "info":
+        [
+            [ (1분반 info)
+                {
+                    "day": 1, (1 : 월요일 ~ 5 : 금요일)
+                    "time": 1, (1교시)
+                    "teacher": "성함"
+                },
+                {
+                    "day": 1,
+                    "time": 2,
+                    "teacher": "성함"
+                }
+            ],
+            [ (2분반 info)
+                {
+                    "day": 2,
+                    "time": 6,
+                    "teacher": "성함"
+                },
+                {
+                    "day": 2,
+                    "time": 7,
+                    "teacher": "성함"
+                }
+            ]
+        ]
     }
     ```
 
@@ -115,8 +142,56 @@ subjectcode and classnum must be natural numbers
     ```
 
 - GET
+    - get information about the class
+    - parameters: none
+
+    - returns:
+    ```
+    {
+        "status": "success" | false,
+        "data": 
+        {
+            "info": "분반 정보(POST 설명 참고)",
+            "students": "해당 분반 학생 교번"
+        }
+    }
+    ```
+
 - DELETE
+    - delete classes
+    - parameters: none
+
+    ```
+    example:
+    /subjects/1/3 : delete classes that subject == 1, classnum >= 3
+    /subjects/3/1 : delete classes that subject == 3, classnum >= 1
+    ```
+    - returns:
+    ```
+    {
+        "status": "success" | false
+    }
+    ```
+
 - PATCH
+    - add/del students
+    - parameters: add, del
+    ```
+    add: 추가할 학생 교번
+    del: 삭제할 학생 교번
+
+    example:
+    {
+        "add": [1,2,3],
+        "del": [4,5,6]
+    }
+    ```
+    - returns:
+    ```
+    {
+        "status": "success" | false
+    }
+    ```
 
 ### `/auth/login`
 - POST
@@ -238,6 +313,9 @@ code is a unique identifier(student code, ex:20001)
 - PATCH(TODO)
 
 ### `/auth/changepw/:code`
+code must be a natural number
+code is a unique identifier(student code, ex:20001)
+
 - POST
     - change password of the user
 

@@ -57,7 +57,7 @@ module.exports = {
     delete: async(ctx, next) => {
         const isExist = await ctx.state.collection.classes.countDocuments({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: { $gte: parseInt(ctx.params.classnum, 10) } });
         if(isExist <= 0) ctx.throw(400);
-        await ctx.state.collection.classes.deleteOne({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: { $gte: parseInt(ctx.params.classnum, 10) } });
+        await ctx.state.collection.classes.deleteMany({ subjectcode: parseInt(ctx.params.subjectcode, 10), classnum: { $gte: parseInt(ctx.params.classnum, 10) } });
         await ctx.state.collection.subjects.findOneAndUpdate({ code: parseInt(ctx.params.subjectcode, 10) }, { $set: { classes: parseInt(ctx.params.classnum, 10)-1 } });
         await next();
     },

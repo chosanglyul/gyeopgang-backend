@@ -1,24 +1,30 @@
 const bcrypt = require("bcrypt");
 const isNumber = require("../lib/isNumber");
 const Ajv = require('ajv');
-const { ChangeStream } = require("mongodb");
 const ajv = new Ajv();
-const schema = {
+const adddelproperty = {
     "type": "object",
-    "properties": {
-        "subjects": {
-            "type": "array",
-            "items": [{"type": "integer"}],
-            "additionalItems": false
-        },
-        "classes": {
-            "type": "array",
-            "items": [{"type": "integer"}],
-            "additionalItems": false
-        }
+    "subjects": {
+        "type": "array",
+        "items": [{"type": "integer"}],
+        "additionalItems": false
+    },
+    "classes": {
+        "type": "array",
+        "items": [{"type": "integer"}],
+        "additionalItems": false
     },
     "additionalProperties": false,
     "required": ["subjects", "classes"]
+}
+const schema = {
+    "type": "object",
+    "properties": {
+        "add": adddelproperty,
+        "del": adddelproperty
+    },
+    "additionalProperties": false,
+    "required": ["add", "del"]
 };
 
 module.exports = {
@@ -64,20 +70,22 @@ module.exports = {
             ctx.throw(400);
         }
 
-        const changes = JSON.parse(ctx.request.body.changes);
         const user = await ctx.state.collection.users.findOne({ code: parseInt(ctx.params.code, 10)});
         if(!user) ctx.throw(400);
-        const chksubject = changes.subjects.map(val => {
-            if(user.subjects.includes(val)) return -1;
-            else return 0;
-        });
-        const chkclass = (await Promise.all(changes.subjects.map(val => ctx.state.collection.subjects.findOne({ code: val })))).map((val, idx) => {
-            if(!val || !val.classnum || changes.classes[idx] <= 0 || changes.classes[idx] > val.classnum) return -1;
-            else return 0;
-        });
-        if(chkclass.includes(-1) || chksubject.includes(-1)) ctx.throw(400);
+        const changes = JSON.parse(ctx.request.body.changes);
 
-        await ctx.state.collection.classes.findOneAndUpdate({ code: user.code }, { $set: { subjects: user.subjects.concat(changes.subjects), classes: user.classes.concat(changes.classes) } });
+        const chkadd_sub = await Promise.all(changes.add.subject.map(subjectcode => ctx.state.collection.subjects.findOne({ code: subjectcode })));
+        const chkadd_exist = changes.add.subject.map(subjectcode => user.subjects.indexOf(subjectcode));
+        const chkdel_sub = changes.del.subject.map(subjectcode => user.subjects.indexOf(subjectcode));
+        if(chkadd_sub.some(e => !e) || chkdel_sub.includes(-1) || chkadd_exist.some(e => e != -1)) ctx.throw(400);
+        const chkadd_cla = changes.add.classes.map((classnum, idx) => (chkadd_sub[idx].classes <= classnum) && (classnum > 0));
+        if(chkadd_cla.includes(false)) ctx.throw(400);
+
+        chkdel_sub.sort().reverse().forEach(idx => {
+            user.subjects.splice(idx, 1);
+            user.classes.splice(idx, 1);
+        });
+        await ctx.state.collection.classes.findOneAndUpdate({ code: user.code }, { $set: { subjects: user.subjects.concat(changes.add.subjects), classes: user.classes.concat(changes.add.classes) } });
         await next();
     },
     common: async(ctx, next) => {
