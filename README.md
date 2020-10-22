@@ -175,15 +175,17 @@ subjectcode and classnum must be natural numbers
 
 - PATCH
     - add/del students
-    - parameters: add, del
+    - parameters: changes
     ```
-    add: 추가할 학생 교번
-    del: 삭제할 학생 교번
+    changes: 추가/삭제할 학생 교번
 
     example:
     {
-        "add": [1,2,3],
-        "del": [4,5,6]
+        "changes":
+        {
+            "add": [1,2,3],
+            "del": [4,5,6]
+        }
     }
     ```
     - returns:
@@ -229,7 +231,6 @@ subjectcode and classnum must be natural numbers
     ```
 
 ### `/auth/user/:code`
-code must be a natural number
 code is a unique identifier(student code, ex:20001)
 
 - POST
@@ -271,13 +272,13 @@ code is a unique identifier(student code, ex:20001)
         "status": "success" | false,
         "data": 
         {
-            "email": "you@example.com",
-            "name": "your-name",
-            "grade": 1,
-            "class": 1,
-            "number": 1
-            "subjects": [1,2,3],
-            "classes": [2,1,5],
+            "email": "",
+            "name": "이름",
+            "grade": "학년",
+            "class": "반",
+            "number": "번호",
+            "subjects": "수강하는 과목의 번호",
+            "classes": "수강하는 각 과목의 분반",
             "password": null
         }
     }
@@ -287,13 +288,13 @@ code is a unique identifier(student code, ex:20001)
         "status": "success",
         "data": 
         {
-            "email": "",
-            "name": "이름",
-            "grade": "학년",
-            "class": "반",
-            "number": "번호",
-            "subjects": "수강하는 과목의 번호",
-            "classes": "수강하는 각 과목의 분반",
+            "email": "you@example.com",
+            "name": "your-name",
+            "grade": 1,
+            "class": 1,
+            "number": 1
+            "subjects": [1,2,3],
+            "classes": [2,1,5],
             "password": null
         }
     }
@@ -310,7 +311,35 @@ code is a unique identifier(student code, ex:20001)
     }
     ```
 
-- PATCH(TODO)
+- PATCH
+    - add/del subjects
+    - parameters: changes
+    ```
+    changes: 추가/삭제할 수강 과목
+
+    example:
+    {
+        "changes":
+        {
+            "add":
+            {
+                "subjects": [1,2,3],
+                "classes": [2,3,4]   
+            }
+            "del":
+            {
+                "subjects": [4,5,6],
+                "classes": [1,2,3]   
+            }
+        }   
+    }
+    ```
+    - returns:
+    ```
+    {
+        "status": "success" | false
+    }
+    ```
 
 ### `/auth/changepw/:code`
 code must be a natural number
