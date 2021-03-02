@@ -26,11 +26,11 @@ main.use(cors({
 }).use(koaBody());
 main.use(getdb.connect);
 main.use("/auth", pass.routes(), pass.allowedMethods());
-main.use(withAuth.unless({ path: ['/', '/auth/login'] }));
+main.use(withAuth.unless({ path: ['/', '/auth/login', '/auth/logout'] }));
 main.use("/auth", auth.routes(), auth.allowedMethods());
 main.use("/subjects", subjects.routes(), subjects.allowedMethods());
 main.use(ctx => ctx.body.status = "success");
 
 app.use(main.routes(), main.allowedMethods());
-app.on('error', err => console.log('Request Error', err.status));
+app.on('error', err => console.log('Request Error', err));
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));

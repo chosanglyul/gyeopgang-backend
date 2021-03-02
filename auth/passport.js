@@ -27,5 +27,9 @@ passport.use('local', new LocalStrategy({
 
 pass.use(passport.initialize(), passport.session());
 pass.post("/login", passport.authenticate('local'));
+pass.post("/logout", async (ctx, next) => {
+    await ctx.logout();
+    await next();
+});
 
 module.exports = pass;

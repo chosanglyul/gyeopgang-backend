@@ -213,7 +213,7 @@ subjectcode and classnum must be natural numbers
     - returns:
     ```
     {
-        MUST CHECK
+        "status": "success" | false
     }
     ```
     
@@ -226,7 +226,7 @@ subjectcode and classnum must be natural numbers
     - returns:
     ```
     {
-        MUST CHECK
+        "status": "success" | false
     }
     ```
 
