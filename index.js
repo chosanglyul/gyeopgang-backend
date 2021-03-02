@@ -32,5 +32,5 @@ main.use("/subjects", subjects.routes(), subjects.allowedMethods());
 main.use(ctx => ctx.body.status = "success");
 
 app.use(main.routes(), main.allowedMethods());
-app.on('error', err => console.log('Server Error\n', err));
+app.on('error', err => console.log('Request Error', err.status));
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
