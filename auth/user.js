@@ -29,7 +29,7 @@ const schema = {
 
 module.exports = {
     post: async(ctx, next) => {
-        if(!ctx.request.body.email || !ctx.request.body.name || !ctx.request.body.password || !ctx.request.body.phone) ctx.throw(400);
+        if(!ctx.request.body.name || !ctx.request.body.password) ctx.throw(400);
         if(!isNumber(ctx.request.body.grade) || !isNumber(ctx.request.body.class) || !isNumber(ctx.request.body.number)) ctx.throw(400);
         if(ctx.request.body.grade > 3 || ctx.request.body.grade <= 0 || ctx.request.body.class <= 0 || ctx.request.body.number <= 0) ctx.throw(400);
         const isExist = await ctx.state.collection.users.countDocuments({ code: parseInt(ctx.params.code, 10)});
