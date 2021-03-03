@@ -6,15 +6,12 @@ const adddelproperty = {
     "type": "object",
     "subjects": {
         "type": "array",
-        "items": [{"type": "integer"}],
-        "additionalItems": false
+        "items": [{"type": "integer"}]
     },
     "classes": {
         "type": "array",
-        "items": [{"type": "integer"}],
-        "additionalItems": false
+        "items": [{"type": "integer"}]
     },
-    "additionalProperties": false,
     "required": ["subjects", "classes"]
 }
 const schema = {
@@ -23,7 +20,6 @@ const schema = {
         "add": adddelproperty,
         "del": adddelproperty
     },
-    "additionalProperties": false,
     "required": ["add", "del"]
 };
 
@@ -72,20 +68,23 @@ module.exports = {
 
         const user = await ctx.state.collection.users.findOne({ code: parseInt(ctx.params.code, 10)});
         if(!user) ctx.throw(400);
-        const changes = JSON.parse(ctx.request.body.changes);
-
-        const chkadd_sub = await Promise.all(changes.add.subject.map(subjectcode => ctx.state.collection.subjects.findOne({ code: subjectcode })));
-        const chkadd_exist = changes.add.subject.map(subjectcode => user.subjects.indexOf(subjectcode));
-        const chkdel_sub = changes.del.subject.map(subjectcode => user.subjects.indexOf(subjectcode));
-        if(chkadd_sub.some(e => !e) || chkdel_sub.includes(-1) || chkadd_exist.some(e => e != -1)) ctx.throw(400);
-        const chkadd_cla = changes.add.classes.map((classnum, idx) => (chkadd_sub[idx].classes <= classnum) && (classnum > 0));
-        if(chkadd_cla.includes(false)) ctx.throw(400);
+        const changes = ctx.request.body.changes;
+        const add_class = await Promise.all(changes.add.subjects.map((subjectcode, idx) => ctx.state.collection.classes.findOne({ subjectcode: subjectcode, classnum: changes.add.classes[idx] })));
+        const chkadd_exist = changes.add.subjects.map(subjectcode => user.subjects.indexOf(subjectcode));
+        const chkdel_sub = changes.del.subjects.map(subjectcode => user.subjects.indexOf(subjectcode));
+        if(add_class.some(e => !e) || chkdel_sub.includes(-1) || chkadd_exist.some(e => e != -1)) ctx.throw(400);
 
         chkdel_sub.sort().reverse().forEach(idx => {
             user.subjects.splice(idx, 1);
             user.classes.splice(idx, 1);
         });
-        await ctx.state.collection.classes.findOneAndUpdate({ code: user.code }, { $set: { subjects: user.subjects.concat(changes.add.subjects), classes: user.classes.concat(changes.add.classes) } });
+        user.subjects = user.subjects.concat(changes.add.subjects);
+        user.classes = user.classes.concat(changes.add.classes);
+        await ctx.state.collection.users.findOneAndUpdate({ code: user.code }, { $set: { subjects: user.subjects, classes: user.classes } });
+        await Promise.all(add_class.map(val => {
+            val.students.push(user.code);
+            ctx.state.collection.classes.findOneAndUpdate({ subjectcode: val.subjectcode, classnum: val.classnum }, { $set: { students: val.students } });
+        }));
         await next();
     },
     common: async(ctx, next) => {

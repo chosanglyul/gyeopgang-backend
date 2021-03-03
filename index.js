@@ -8,6 +8,7 @@ const cors = require("@koa/cors");
 const auth = require("./auth");
 const pass = require("./auth/passport");
 const subjects = require("./subjects");
+const gyeopgang = require("./gyeopgang");
 const getdb = require("./lib/getdb");
 const withAuth = require("./lib/withAuth");
 const main = new Router();
@@ -26,9 +27,10 @@ main.use(cors({
 }).use(koaBody());
 main.use(getdb.connect);
 main.use("/auth", pass.routes(), pass.allowedMethods());
-//main.use(withAuth.unless({ path: ['/', '/auth/login', '/auth/logout'] }));
+//main.use(withAuth.unless({ path: ['/', '/auth/login', '/auth/logout'] })); //allow for signup page
 main.use("/auth", auth.routes(), auth.allowedMethods());
 main.use("/subjects", subjects.routes(), subjects.allowedMethods());
+main.use("/gyeopgang", gyeopgang.routes(), gyeopgang.allowedMethods());
 main.use(ctx => ctx.body.status = "success");
 
 app.use(main.routes(), main.allowedMethods());

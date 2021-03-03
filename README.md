@@ -343,7 +343,7 @@ code is a unique identifier(student code, ex:20001)
             {
                 "subjects": [1,2,3],
                 "classes": [2,3,4]   
-            }
+            },
             "del":
             {
                 "subjects": [4,5,6],
