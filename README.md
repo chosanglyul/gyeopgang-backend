@@ -35,12 +35,50 @@ $ node index
 [The app](http://localhost:8000) runs on port 8000 on localhost.
 
 ## API docs
+
+### `/subjects`
+- POST
+    - add a new subject at end of the record
+    - parameters: name, hours, credit
+    ```
+    name : 과목명
+    hours : 실제 수업 시간
+    credit : 학점 수
+
+    example:
+    {
+        "name": "물리학실험1",
+        "hours": 2,
+        "credit": 1
+    }
+    ```
+
+    - returns:
+    ```
+    {
+        "status": "success" | false
+    }
+    ```
+
+- GET
+    - get number of saved subjects
+    - parameters: none
+    - returns: 
+    ```
+    {
+        "status": "success" | false,
+        "data": 
+        {
+            "count": "등록되어 있는 과목 수"
+        }
+    }
+    ```
+
 ### `/subjects/:code`
 code must be a natural number
 
-- POST
+- POST(Don't use this, use POST /subject)
     - add a new subject
-    - code must equals to (number of subjects in database)+1
     - parameters: name, hours, credit
     ```
     name : 과목명
@@ -65,7 +103,6 @@ code must be a natural number
 - GET
     - get information about the subject
     - parameters: none
-
     - returns: 
     ```
     {
@@ -237,7 +274,6 @@ code is a unique identifier(student code, ex:20001)
     - add a new user
     - parameters: email, name, password, grade, class, number
     ```
-    email : 이메일 주소
     name : 이름
     password : 비밀번호
     grade : 학년
@@ -246,7 +282,6 @@ code is a unique identifier(student code, ex:20001)
 
     example:
     {
-        "email": "you@example.com",
         "name": "your-name",
         "password": "your-passw0rd",
         "grade": 1,
@@ -272,29 +307,12 @@ code is a unique identifier(student code, ex:20001)
         "status": "success" | false,
         "data": 
         {
-            "email": "",
             "name": "이름",
             "grade": "학년",
             "class": "반",
             "number": "번호",
             "subjects": "수강하는 과목의 번호",
             "classes": "수강하는 각 과목의 분반",
-            "password": null
-        }
-    }
-
-    example:
-    {
-        "status": "success",
-        "data": 
-        {
-            "email": "you@example.com",
-            "name": "your-name",
-            "grade": 1,
-            "class": 1,
-            "number": 1
-            "subjects": [1,2,3],
-            "classes": [2,1,5],
             "password": null
         }
     }

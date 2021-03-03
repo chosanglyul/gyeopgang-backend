@@ -26,7 +26,7 @@ main.use(cors({
 }).use(koaBody());
 main.use(getdb.connect);
 main.use("/auth", pass.routes(), pass.allowedMethods());
-main.use(withAuth.unless({ path: ['/', '/auth/login', '/auth/logout'] }));
+//main.use(withAuth.unless({ path: ['/', '/auth/login', '/auth/logout'] }));
 main.use("/auth", auth.routes(), auth.allowedMethods());
 main.use("/subjects", subjects.routes(), subjects.allowedMethods());
 main.use(ctx => ctx.body.status = "success");
