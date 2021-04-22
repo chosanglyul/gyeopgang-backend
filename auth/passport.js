@@ -21,8 +21,9 @@ passport.use('local', new LocalStrategy({
 }, async ({ ctx }, code, password, done) => {
     if(!isNumber(code, "4")) return done(null, false);
     const user = await ctx.state.collection.users.findOne({ code: parseInt(code, 10) });
+    console.log(code, password, user);
     if(!user) return done(null, false);
-    if(!bcrypt.compare(password, user.password)) return done(null, false);
+    if(!(await bcrypt.compare(password, user.password))) return done(null, false);
     return done(null, user);
 }));
 

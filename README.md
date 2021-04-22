@@ -362,16 +362,9 @@ subjectcode and classnum must be natural numbers
     {
         "changes":
         {
-            "add":
-            {
-                "subjects": [1,2,3],
-                "classes": [2,3,4]   
-            },
-            "del":
-            {
-                "subjects": [4,5,6],
-                "classes": [1,2,3]   
-            }
+            "action": "add" | "del",
+            "subject": 1,
+            "class": 2
         }   
     }
     ```
@@ -384,7 +377,41 @@ subjectcode and classnum must be natural numbers
 
 ### `/auth/user?code=X`
 - GET
-    - GET
     - get information about user that code equals X except password
     - parameters: none
     - returns: same form as GET /auth/user
+
+### `/gyeopgang/all`
+- GET
+    - get counts of overlapped classes
+    - parameters: none
+    
+    - returns:
+    ```
+    {
+        "status": "success" | false,
+        "data": 
+        {
+            name: count of overlapped classes,
+            name: count of overlapped classes,
+            ...
+        }
+    }
+    ```
+
+### `/gyeopgang/cmpuser`
+- GET
+    - get overlapped classes with specific student
+    - parameters: none
+    
+    - returns:
+    ```
+    {
+        "status": "success" | false,
+        "data":
+        {
+            "subjects": array of overlapped subjects,
+            "classes": array of overlapped classes
+        }
+    }
+    ```
