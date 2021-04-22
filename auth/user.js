@@ -23,39 +23,121 @@ const schema = {
     "required": ["add", "del"]
 };
 
-module.exports = {
-    post: async(ctx, next) => {
-        if(!ctx.request.body.name || !ctx.request.body.password) ctx.throw(400);
-        if(!isNumber(ctx.request.body.grade) || !isNumber(ctx.request.body.class) || !isNumber(ctx.request.body.number)) ctx.throw(400);
-        if(ctx.request.body.grade > 3 || ctx.request.body.grade <= 0 || ctx.request.body.class <= 0 || ctx.request.body.number <= 0) ctx.throw(400);
-        const isExist = await ctx.state.collection.users.countDocuments({ code: parseInt(ctx.params.code, 10)});
-        if(isExist >= 1) ctx.throw(400);
-        await ctx.state.collection.users.findOneAndUpdate({ code: parseInt(ctx.params.code, 10) }, {
+class data {
+    constructor(collection) {
+        this.collection = collection;
+    }
+
+    getDict() { return {}; } //HAVE TO OVERRIDE!
+
+    async newData() {} //HAVE TO OVERRIDE!
+
+    async pullData() {
+        if(!this.info) {
+            const user = await this.collection.findOne(this.getDict());
+            if(user) this.info = user;
+            else throw 400;
+        }
+    }
+
+    async getData() {
+        try {
+            await this.pullData();
+            return this.info;
+        } catch(e) { throw e; }
+    }
+
+    async deleteData() {
+        try {
+            this.pullData();
+            await this.collection.deleteOne(this.getDict());
+        } catch(e) { throw e; }
+    }
+
+    async changeData(info) {
+        const isExist = await this.collection.countDocuments(this.getDict());
+        if(!isExist) throw 400;
+
+        await this.collection.findOneAndUpdate(this.getDict(), { $set: info });
+    }
+}
+
+class user extends data {
+    constructor(collection, code) {
+        super(collection);
+        if(!isNumber(code) || code <= 0) throw 400;
+        this.code = parseInt(code, 10);
+    }
+
+    getDict() { return { code: this.code }; }
+
+    async newData(info) {
+        const isExist = await this.collection.countDocuments(this.getDict());
+        if(isExist >= 1) throw 400;
+        if(!info.name || !info.password || !isNumber(info.grade) || !isNumber(info.class) || !isNumber(info.number)) throw 400;
+        if(info.grade > 3 || info.grade <= 0 || info.class <= 0 || info.number <= 0) throw 400;
+
+        await this.collection.findOneAndUpdate(this.getDict(), {
             $setOnInsert: {
-                name: ctx.request.body.name,
-                grade: parseInt(ctx.request.body.grade, 10),
-                class: parseInt(ctx.request.body.class, 10),
-                number: parseInt(ctx.request.body.number, 10),
-                password: await bcrypt.hash(ctx.request.body.password, 10),
+                name: info.name,
+                grade: parseInt(info.grade, 10),
+                class: parseInt(info.class, 10),
+                number: parseInt(info.number, 10),
+                password: await bcrypt.hash(info.password, 10),
                 subjects: [],
                 classes: []
             }
         }, { upsert: true });
+    }
+}
+
+class subject extends data {
+    constructor(collection, code) {
+        super(collection);
+        if(!isNumber(code) || code <= 0) throw 400;
+        this.code = parseInt(code, 10);
+    }
+
+    getDict() { return { code: this.code }; }
+
+    async newData(info) {
+        const isExist = await this.collection.countDocuments(this.getDict());
+        if(isExist >= 1) throw 400;
+        if(!info.name || !info.password || !isNumber(info.grade) || !isNumber(info.class) || !isNumber(info.number)) throw 400;
+        if(info.grade > 3 || info.grade <= 0 || info.class <= 0 || info.number <= 0) throw 400;
+
+        await this.collection.findOneAndUpdate(this.getDict(), {
+            $setOnInsert: {
+                name: info.name,
+                grade: parseInt(info.grade, 10),
+                class: parseInt(info.class, 10),
+                number: parseInt(info.number, 10),
+                password: await bcrypt.hash(info.password, 10),
+                subjects: [],
+                classes: []
+            }
+        }, { upsert: true });
+    }
+}
+
+module.exports = {
+    register: async(ctx, next) => {
+        try {
+            const userclass = new user(ctx.state.collection.users, ctx.request.body.code);
+            await userclass.newData(ctx.request.body);
+        } catch(e) { ctx.throw(e); }
         await next();
     },
     get: async(ctx, next) => {
-        var user = await ctx.state.collection.users.findOne({ code: parseInt(ctx.params.code, 10) });
-        if(!user) ctx.throw(400);
-        user.password = null;
-        user.classes = await Promise.all(user.classes.map((val, idx) => ctx.state.collection.classes.findOne({ subjectcode: user.subjects[idx], classnum: val })));
-        user.subjects = await Promise.all(user.subjects.map(val => ctx.state.collection.subjects.findOne({ code: val })));
-        ctx.body.data = user;
+        try {
+            ctx.body.data = await ctx.state.userclass.getData();
+            ctx.body.data.password = null;
+        } catch(e) { ctx.throw(e); }
         await next();
     },
     delete: async(ctx, next) => {
-        const isExist = await ctx.state.collection.users.countDocuments({ code: parseInt(ctx.params.code, 10)});
-        if(!isExist) ctx.throw(400);
-        await ctx.state.collection.users.deleteOne({ code: parseInt(ctx.params.code, 10) });
+        try { await ctx.state.userclass.deleteData(); }
+        catch(e) { ctx.throw(e); }
         await next();
     },
     patch: async(ctx, next) => {
@@ -65,35 +147,44 @@ module.exports = {
             console.log(`Validation Error. ${ajv.errorsText()}`);
             ctx.throw(400);
         }
-
-        const user = await ctx.state.collection.users.findOne({ code: parseInt(ctx.params.code, 10)});
-        if(!user) ctx.throw(400);
+        const thisuser = await ctx.state.userclass.getData();
         const changes = ctx.request.body.changes;
         const add_class = await Promise.all(changes.add.subjects.map((subjectcode, idx) => ctx.state.collection.classes.findOne({ subjectcode: subjectcode, classnum: changes.add.classes[idx] })));
-        const chkadd_exist = changes.add.subjects.map(subjectcode => user.subjects.indexOf(subjectcode));
-        const chkdel_sub = changes.del.subjects.map(subjectcode => user.subjects.indexOf(subjectcode));
+        const chkadd_exist = changes.add.subjects.map(subjectcode => thisuser.subjects.indexOf(subjectcode));
+        const chkdel_sub = changes.del.subjects.map(subjectcode => thisuser.subjects.indexOf(subjectcode));
         if(add_class.some(e => !e) || chkdel_sub.includes(-1) || chkadd_exist.some(e => e != -1)) ctx.throw(400);
 
         chkdel_sub.sort().reverse().forEach(idx => {
-            user.subjects.splice(idx, 1);
-            user.classes.splice(idx, 1);
+            thisuser.subjects.splice(idx, 1);
+            thisuser.classes.splice(idx, 1);
         });
-        user.subjects = user.subjects.concat(changes.add.subjects);
-        user.classes = user.classes.concat(changes.add.classes);
-        await ctx.state.collection.users.findOneAndUpdate({ code: user.code }, { $set: { subjects: user.subjects, classes: user.classes } });
+        thisuser.subjects = thisuser.subjects.concat(changes.add.subjects);
+        thisuser.classes = thisuser.classes.concat(changes.add.classes);
+        await ctx.state.collection.users.findOneAndUpdate({ code: thisuser.code }, { $set: { subjects: thisuser.subjects, classes: thisuser.classes } });
         await Promise.all(add_class.map(val => {
-            val.students.push(user.code);
+            val.students.push(thisuser.code);
             ctx.state.collection.classes.findOneAndUpdate({ subjectcode: val.subjectcode, classnum: val.classnum }, { $set: { students: val.students } });
         }));
         await next();
     },
-    common: async(ctx, next) => {
-        if(!isNumber(ctx.params.code, "4") || ctx.params.code < 0) ctx.throw(400);
+    changepw: async(ctx, next) => {
+        if(!ctx.request.body.oldpassword || !ctx.request.body.password) ctx.throw(400);
+        const userinfo = await ctx.state.userclass.getData();
+        console.log(userinfo);
+        if(!bcrypt.compare(ctx.request.body.oldpassword, userinfo.password)) ctx.throw(400);
+        await ctx.state.userclass.changeData({ password: await bcrypt.hash(ctx.request.body.password, 10) });
         await next();
     },
-    changepw: async(ctx, next) => {
-        if(!isNumber(ctx.params.code, "4") || ctx.params.code < 0 || !ctx.request.body.password) ctx.throw(400);
-        await ctx.state.collection.users.fineOneAndUpdate({ code: parseInt(ctx.params.code, 10) }, { $set: { password: await bcrypt.hash(ctx.request.body.password, 10) } });
+    common: async(ctx, next) => {
+        try {
+            var code = 0;
+            console.log(ctx.cookies.get('koa.sess'));
+            console.log(ctx.isAuthenticated(), ctx.isUnauthenticated());
+            if(ctx.method == 'GET' && ctx.request.query.code) code = ctx.request.query.code;
+            else if(!ctx.isUnauthenticated()) code = ctx.session.passport.user.code;
+            else ctx.throw(400);
+            ctx.state.userclass = new user(ctx.state.collection.users, code);
+        } catch(e) { ctx.throw(e); }
         await next();
     }
 };

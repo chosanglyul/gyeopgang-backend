@@ -267,9 +267,7 @@ subjectcode and classnum must be natural numbers
     }
     ```
 
-### `/auth/user/:code`
-code is a unique identifier(student code, ex:20001)
-
+### `/auth/register`
 - POST
     - add a new user
     - parameters: email, name, password, grade, class, number
@@ -297,8 +295,32 @@ code is a unique identifier(student code, ex:20001)
     }
     ```
 
+### `/auth/user`
+code is a unique identifier(student code, ex:20001)
+
+- POST
+    - change password of the logined user
+
+    - parameters: oldpassword, password
+    ```
+    password: 비밀번호
+
+    example:
+    {
+        "oldpassword": "password before change",
+        "password": "your-new-passw0rd"
+    }
+    ```
+
+    - returns:
+    ```
+    {
+        "status": "success" | false
+    }
+    ```
+
 - GET
-    - get information about the user except password
+    - get information about logined user except password
     - parameters: none
 
     - returns:
@@ -319,7 +341,7 @@ code is a unique identifier(student code, ex:20001)
     ```
 
 - DELETE
-    - delete a user
+    - delete a logined user
     - parameters: none
 
     - returns:
@@ -330,7 +352,7 @@ code is a unique identifier(student code, ex:20001)
     ```
 
 - PATCH
-    - add/del subjects
+    - add/del subjects for logined user
     - parameters: changes
     ```
     changes: 추가/삭제할 수강 과목
@@ -359,26 +381,9 @@ code is a unique identifier(student code, ex:20001)
     }
     ```
 
-### `/auth/changepw/:code`
-code must be a natural number
-code is a unique identifier(student code, ex:20001)
-
-- POST
-    - change password of the user
-
-    - parameters: password
-    ```
-    password: 비밀번호
-
-    example:
-    {
-        "password": "your-passw0rd"
-    }
-    ```
-
-    - returns:
-    ```
-    {
-        "status": "success" | false
-    }
-    ```
+### `/auth/user?code=X`
+- GET
+    - GET
+    - get information about user that code equals X except password
+    - parameters: none
+    - returns: same form as GET /auth/user

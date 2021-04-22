@@ -3,7 +3,7 @@ const auth = new Router();
 
 const user = require('./user');
 
-auth.use("/user/:code", user.common).get("/user/:code", user.get).post("/user/:code", user.post).delete("/user/:code", user.delete).patch("/user/:code", user.patch);
-auth.post("/changepw/:code", user.changepw);
+auth.post("/register", user.register);
+auth.use("/user", user.common).get("/user", user.get).post("/user", user.changepw).delete("/user", user.delete).patch("/user", user.patch);
 
 module.exports = auth;

@@ -40,8 +40,8 @@ module.exports = {
         await next();
     },
     getindex: async(ctx, next) => {
-        const count = await ctx.state.collection.subjects.countDocuments();
-        ctx.body.data = { "count": count };
+        const subjects = await ctx.state.collection.subjects.find().toArray();
+        ctx.body.data = subjects;
         await next();
     }
 };

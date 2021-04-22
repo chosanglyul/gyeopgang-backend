@@ -3,13 +3,14 @@ const passport = require("koa-passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const isNumber = require("../lib/isNumber");
-const pass = new Router();
 
 passport.serializeUser((user, done) => {
+    console.log('SE');
     done(null, user);
 });
 
 passport.deserializeUser((user, done) => {
+    console.log("DE");
     done(null, user);
 });
 
@@ -25,11 +26,4 @@ passport.use('local', new LocalStrategy({
     return done(null, user);
 }));
 
-pass.use(passport.initialize(), passport.session());
-pass.post("/login", passport.authenticate('local'));
-pass.post("/logout", async (ctx, next) => {
-    await ctx.logout();
-    await next();
-});
-
-module.exports = pass;
+module.exports = passport;
