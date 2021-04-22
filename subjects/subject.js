@@ -2,6 +2,7 @@ const isNumber = require("../lib/isNumber");
 
 module.exports = {
     post: async(ctx, next) => {
+        console.log(ctx.request.body)
         if(!ctx.request.body.name) ctx.throw(400);
         if(!isNumber(ctx.request.body.hours, "4") || !isNumber(ctx.request.body.credit, "4")) ctx.throw(400);
         if(ctx.request.body.hours <= 0 || ctx.request.body.credit <= 0) ctx.throw(400);
