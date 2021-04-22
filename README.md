@@ -270,8 +270,9 @@ subjectcode and classnum must be natural numbers
 ### `/auth/register`
 - POST
     - add a new user
-    - parameters: email, name, password, grade, class, number
+    - parameters: code, name, password, grade, class, number
     ```
+    code : 교번
     name : 이름
     password : 비밀번호
     grade : 학년
@@ -280,6 +281,7 @@ subjectcode and classnum must be natural numbers
 
     example:
     {
+        "code": "your-code",
         "name": "your-name",
         "password": "your-passw0rd",
         "grade": 1,
