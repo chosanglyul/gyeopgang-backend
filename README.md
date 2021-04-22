@@ -298,13 +298,12 @@ subjectcode and classnum must be natural numbers
     ```
 
 ### `/auth/user`
-code is a unique identifier(student code, ex:20001)
-
 - POST
     - change password of the logined user
 
     - parameters: oldpassword, password
     ```
+    oldpassword: 이전 비밀번호
     password: 비밀번호
 
     example:
